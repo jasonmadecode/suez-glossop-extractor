@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suez Glossop Extractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8f0ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        .success h3 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 15px;
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚛 Suez Glossop Extractor</h1>
+            <p class="subtitle">Server-side OCR for scanned weighbridge PDFs</p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <div style="font-size: 1.2em; margin-bottom: 10px;">Drop your PDF here or click to browse</div>
+                <div style="color: #999;">Supports scanned weighbridge tickets</div>
+                <input type="file" id="fileInput" accept=".pdf">
+            </div>
+
+            <button class="btn" id="processBtn" disabled>Upload PDF First</button>
+
+            <div class="progress" id="progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+                <div class="status" id="status">Processing...</div>
+            </div>
+
+            <div class="success" id="success">
+                <h3>✓ Success!</h3>
+                <p id="successMessage"></p>
+                <a href="#" class="download-btn" id="downloadBtn">📥 Download Excel</a>
+            </div>
+
+            <div class="error" id="error">
+                <strong>Error:</strong> <span id="errorMessage"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const status = document.getElementById('status');
+        const success = document.getElementById('success');
+        const successMessage = document.getElementById('successMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorDiv = document.getElementById('error');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            selectedFile = file;
+            processBtn.disabled = false;
+            processBtn.textContent = `Process ${file.name}`;
+            success.classList.remove('show');
+            errorDiv.classList.remove('show');
+        }
+
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            processBtn.disabled = true;
+            progress.classList.add('show');
+            success.classList.remove('show');
+            errorDiv.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('pdf', selectedFile);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.substring(6));
+
+                            if (data.status === 'processing') {
+                                const percent = Math.round((data.page / data.total) * 100);
+                                progressFill.style.width = percent + '%';
+                                progressFill.textContent = percent + '%';
+                                status.textContent = `Processing page ${data.page}/${data.total} - Found ${data.found} tickets`;
+                            } else if (data.status === 'complete') {
+                                progressFill.style.width = '100%';
+                                progressFill.textContent = '100%';
+                                progress.classList.remove('show');
+                                success.classList.add('show');
+                                successMessage.textContent = `Extracted ${data.tickets} tickets from PDF`;
+                                downloadBtn.href = '/download/' + data.filename;
+                            } else if (data.status === 'error') {
+                                progress.classList.remove('show');
+                                errorDiv.classList.add('show');
+                                errorMessage.textContent = data.message;
+                            }
+                        }
+                    }
+                }
+
+            } catch (error) {
+                progress.classList.remove('show');
+                errorDiv.classList.add('show');
+                errorMessage.textContent = error.message;
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Another PDF';
+            }
+        });
+    </script>
+</body>
+</html>
