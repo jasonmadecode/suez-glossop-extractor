@@ -6,27 +6,23 @@
    - Go to https://render.com
    - Sign up with GitHub (recommended) or email
 
-2. **Create New Web Service**
+2. **Push Code to GitHub**
+   - Create a new GitHub repository
+   - Upload all the suez-app files to your repo
+   - Make sure Dockerfile, render.yaml, and all other files are included
+
+3. **Create New Web Service on Render**
    - Click "New +" → "Web Service"
-   - Choose "Build and deploy from a Git repository"
+   - Connect your GitHub repository
+   - Render will auto-detect the Dockerfile!
 
-3. **Upload Your Code**
-   - Option A: Create a GitHub repo with the suez-app folder
-   - Option B: Use Render's "Deploy from Git URL" with your repo
-
-4. **Configure Service**
-   ```
-   Name: suez-glossop-extractor
-   Environment: Python 3
-   Build Command: apt-get update && apt-get install -y tesseract-ocr poppler-utils && pip install -r requirements.txt
-   Start Command: gunicorn app:app
-   Plan: Free
-   ```
-
-5. **Deploy!**
+4. **That's it!**
+   - Render automatically detects the Dockerfile
    - Click "Create Web Service"
-   - Wait 5-10 minutes
+   - Wait 5-10 minutes for build
    - Your app will be live at: `https://suez-glossop-extractor.onrender.com`
+
+**Important:** Don't add a custom build command - Render will use the Dockerfile automatically!
 
 ## Alternative: Railway (Also Free!)
 
