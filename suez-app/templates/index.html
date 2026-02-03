@@ -183,13 +183,53 @@
         .error.show {
             display: block;
         }
+
+        .warnings {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            text-align: left;
+        }
+
+        .warnings.show {
+            display: block;
+        }
+
+        .warnings h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warnings ul {
+            margin-left: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .warnings li {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .pages-review {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ffc107;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>🚛 Suez Glossop Extractor</h1>
-            <p class="subtitle">Server-side OCR for scanned weighbridge PDFs</p>
+            <h1>Suez Glossop Extractor</h1>
+            <p class="subtitle">Extract data from scanned weighbridge ticket PDFs</p>
 
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📄</div>
@@ -208,9 +248,15 @@
             </div>
 
             <div class="success" id="success">
-                <h3>✓ Success!</h3>
+                <h3>Success!</h3>
                 <p id="successMessage"></p>
-                <a href="#" class="download-btn" id="downloadBtn">📥 Download Excel</a>
+                <a href="#" class="download-btn" id="downloadBtn">Download Excel</a>
+            </div>
+
+            <div class="warnings" id="warnings">
+                <h4>Pages Needing Manual Review</h4>
+                <div class="pages-review" id="pagesReview"></div>
+                <ul id="issuesList"></ul>
             </div>
 
             <div class="error" id="error">
@@ -231,11 +277,14 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const errorDiv = document.getElementById('error');
         const errorMessage = document.getElementById('errorMessage');
+        const warningsDiv = document.getElementById('warnings');
+        const pagesReview = document.getElementById('pagesReview');
+        const issuesList = document.getElementById('issuesList');
 
         let selectedFile = null;
 
         uploadArea.addEventListener('click', () => fileInput.click());
-        
+
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
@@ -270,6 +319,7 @@
             processBtn.textContent = `Process ${file.name}`;
             success.classList.remove('show');
             errorDiv.classList.remove('show');
+            warningsDiv.classList.remove('show');
         }
 
         processBtn.addEventListener('click', async () => {
@@ -279,6 +329,7 @@
             progress.classList.add('show');
             success.classList.remove('show');
             errorDiv.classList.remove('show');
+            warningsDiv.classList.remove('show');
 
             const formData = new FormData();
             formData.append('pdf', selectedFile);
@@ -315,6 +366,28 @@
                                 success.classList.add('show');
                                 successMessage.textContent = `Extracted ${data.tickets} tickets from PDF`;
                                 downloadBtn.href = '/download/' + data.filename;
+
+                                // Show warnings if there are issues
+                                if (data.issues && data.issues.length > 0) {
+                                    warningsDiv.classList.add('show');
+
+                                    // Show pages needing review
+                                    if (data.pages_needing_review && data.pages_needing_review.length > 0) {
+                                        pagesReview.textContent = `Pages: ${data.pages_needing_review.sort((a, b) => a - b).join(', ')}`;
+                                    } else {
+                                        pagesReview.textContent = '';
+                                    }
+
+                                    // Show issues list
+                                    issuesList.innerHTML = data.issues
+                                        .slice(0, 20)
+                                        .map(issue => `<li>${issue}</li>`)
+                                        .join('');
+
+                                    if (data.issues.length > 20) {
+                                        issuesList.innerHTML += `<li><em>... and ${data.issues.length - 20} more issues</em></li>`;
+                                    }
+                                }
                             } else if (data.status === 'error') {
                                 progress.classList.remove('show');
                                 errorDiv.classList.add('show');
