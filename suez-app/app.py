@@ -318,12 +318,23 @@ def process_pdf():
 
     def generate():
         try:
+            # Send initial status
+            yield f"data: {json.dumps({'status': 'converting', 'message': 'Converting PDF to images...'})}\n\n"
+
             # Convert PDF to images
-            images = pdf2image.convert_from_bytes(pdf_bytes, dpi=300)
+            try:
+                images = pdf2image.convert_from_bytes(pdf_bytes, dpi=300)
+            except Exception as e:
+                yield f"data: {json.dumps({'status': 'error', 'message': f'PDF conversion failed: {str(e)}'})}\n\n"
+                return
 
             all_tickets = []
             all_issues = []
             total_pages = len(images)
+
+            if total_pages == 0:
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No pages found in PDF'})}\n\n"
+                return
 
             for page_num, image in enumerate(images, 1):
                 # Enhance image

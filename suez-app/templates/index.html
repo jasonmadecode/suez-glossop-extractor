@@ -354,7 +354,11 @@
                         if (line.startsWith('data: ')) {
                             const data = JSON.parse(line.substring(6));
 
-                            if (data.status === 'processing') {
+                            if (data.status === 'converting') {
+                                progressFill.style.width = '5%';
+                                progressFill.textContent = '';
+                                status.textContent = data.message || 'Converting PDF...';
+                            } else if (data.status === 'processing') {
                                 const percent = Math.round((data.page / data.total) * 100);
                                 progressFill.style.width = percent + '%';
                                 progressFill.textContent = percent + '%';
