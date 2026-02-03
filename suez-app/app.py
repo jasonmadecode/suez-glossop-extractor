@@ -323,7 +323,7 @@ def process_pdf():
 
             # Convert PDF to images
             try:
-                images = pdf2image.convert_from_bytes(pdf_bytes, dpi=300)
+                images = pdf2image.convert_from_bytes(pdf_bytes, dpi=200)
             except Exception as e:
                 yield f"data: {json.dumps({'status': 'error', 'message': f'PDF conversion failed: {str(e)}'})}\n\n"
                 return
@@ -389,7 +389,14 @@ def process_pdf():
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
 
-    return Response(generate(), mimetype='text/event-stream')
+    return Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'  # Disable nginx buffering
+        }
+    )
 
 
 @app.route('/download/<filename>')
