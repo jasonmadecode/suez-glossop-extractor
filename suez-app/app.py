@@ -313,10 +313,12 @@ def process_pdf():
     if pdf_file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
+    # Read file bytes BEFORE entering generator (file closes after request context)
+    pdf_bytes = pdf_file.read()
+
     def generate():
         try:
             # Convert PDF to images
-            pdf_bytes = pdf_file.read()
             images = pdf2image.convert_from_bytes(pdf_bytes, dpi=300)
 
             all_tickets = []
